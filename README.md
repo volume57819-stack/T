@@ -1,35 +1,109 @@
-# 1. 移除地端 Git（因為現在 repo 是空的）
-rm -rf .git
+#!/usr/bin/env bash
 
-# 2. 初始化 Git
-git init
+echo "=== 🚀 chat-booster FULL AUTO APPLY 開始 ==="
 
-# 3. 用 bundle 匯入真正完整的專案內容
-git clone reply_ai_repo.bundle temp_folder
-cp -R temp_folder/. .
-rm -rf temp_folder
+# -------------------------------
+# 1. 檢查 ZIP
+# -------------------------------
+if [ ! -f chat_booster_production.zip ]; then
+  echo "❌ 找不到 chat_booster_production.zip"
+  echo "請先上傳 ZIP 到 Codespaces"
+  exit 1
+fi
 
-# 4. 建立初始 commit
-git add .
-git commit -m "Initial import from bundle"
+# -------------------------------
+# 2. 解壓與移動
+# -------------------------------
+echo "📦 解壓 chat-booster..."
+rm -rf chat-booster
+unzip -o chat_booster_production.zip -d chat-booster
+cd chat-booster
 
-# 5. 設定 main 分支
-git branch -M main
-
-# 6. 設定 GitHub 遠端（自動抓你的 GitHub 帳號名稱）
-git remote add origin https://github.com/$(gh api user --jq .login)/chat-booster.git
-
-# 7. 推到 GitHub
-git push -u origin main
-
-# 8. 安裝所有依賴
+# -------------------------------
+# 3. 安裝 Node Modules
+# -------------------------------
+echo "📦 安裝 npm 套件..."
 npm ci
 
-# 9. 安裝 Playwright（含 browser）
+echo "🎭 安裝 Playwright..."
 npx playwright install --with-deps
 
-echo "-------------------------------------------------------"
-echo "🎉 專案已完整匯入並推送到 GitHub: chat-booster"
-echo "🟢 下一步：到 Vercel → Import → Chat-Booster → Deploy"
-echo "📌 之後所有：commit / test / e2e / monthly AI 會全部自動化"
-echo "-------------------------------------------------------"
+# -------------------------------
+# 4. 初始化 Git
+# -------------------------------
+echo "🔧 初始化 Git..."
+git init
+git checkout -b main
+git add .
+git commit -m "feat: full-production-auto-apply"
+
+# -------------------------------
+# 5. 輸入 GitHub Repo
+# -------------------------------
+echo ""
+echo "🌐 請輸入 GitHub Repo URL："
+echo "👉 例如：git@github.com:USERNAME/chat-booster.git"
+read REPO
+
+git remote add origin $REPO
+git push -u origin main --force
+
+echo "✔ 已 push 到 GitHub。"
+
+# -------------------------------
+# 6. 自動寫入 GitHub Secrets（使用 GitHub CLI）
+# -------------------------------
+
+echo ""
+echo "🔑 設定 GitHub Secrets（CI、AI分析、自動部署會用到）"
+echo "gScrwU00XHO4i0LrE8IzQlnX："
+read VERCEL_TOKEN
+
+echo "📥 正在寫入 GitHub Secrets..."
+
+gh secret set VERCEL_TOKEN -b"$VERCEL_TOKEN"
+gh secret set GOOGLE_TRENDS_API_KEY -b"dummy-google"
+gh secret set REDDIT_TOKEN -b"dummy-reddit"
+gh secret set X_BEARER_TOKEN -b"dummy-x"
+
+echo "✔ GitHub Secrets 設定完成"
+
+# -------------------------------
+# 7. 自動綁定 Vercel 專案
+# -------------------------------
+echo ""
+echo "🟣 使用 Vercel CLI 自動部署與綁定專案..."
+
+echo "請輸入要在 Vercel 上建立的專案名稱："
+read VERCEL_PROJECT
+
+echo "🔐 登入 Vercel..."
+echo "$VERCEL_TOKEN" | vercel login --token "$VERCEL_TOKEN" &>/dev/null || true
+
+echo "🚀 設定 Vercel Project..."
+vercel link --project "$VERCEL_PROJECT" --yes --token "$VERCEL_TOKEN"
+vercel env add NEXT_PUBLIC_ENV production --token "$VERCEL_TOKEN" <<< "ok"
+
+# -------------------------------
+# 8. 自動部署
+# -------------------------------
+echo ""
+echo "🌍 正在部署至 Vercel..."
+
+URL=$(vercel --prod --token "$VERCEL_TOKEN")
+
+echo ""
+echo "🎉 🎉 🎉 部署完成！"
+echo "你的正式站已上線："
+echo "👉 $URL"
+
+echo ""
+echo "🔁 GitHub Actions 已啟動："
+echo "  ✔ CI / Build / Test"
+echo "  ✔ Playwright E2E"
+echo "  ✔ Daily AI Reports"
+echo "  ✔ Monthly Auto-Optimize"
+echo "  ✔ Auto Deploy to Vercel"
+
+echo ""
+echo "=== 🚀 FULL AUTO APPLY 完成 ==="
