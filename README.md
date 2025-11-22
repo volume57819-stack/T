@@ -41,7 +41,7 @@ git commit -m "feat: full-production-auto-apply"
 # 5. 輸入 GitHub Repo
 # -------------------------------
 echo ""
-echo "🌐 請輸入 GitHub Repo URL："
+echo "🌐 https://github.com/volume57819-stack："
 echo "👉 例如：git@github.com:USERNAME/chat-booster.git"
 read REPO
 
