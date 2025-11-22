@@ -1,29 +1,35 @@
-# 初始化 repo（因為你剛剛只有放 bundle）
+# 1. 移除地端 Git（因為現在 repo 是空的）
 rm -rf .git
+
+# 2. 初始化 Git
 git init
 
-# 將 bundle 的內容套用到真實 repo
+# 3. 用 bundle 匯入真正完整的專案內容
 git clone reply_ai_repo.bundle temp_folder
 cp -R temp_folder/. .
 rm -rf temp_folder
 
-# 建立初始 commit
+# 4. 建立初始 commit
 git add .
 git commit -m "Initial import from bundle"
 
-# 設定 GitHub 遠端並 push
+# 5. 設定 main 分支
 git branch -M main
+
+# 6. 設定 GitHub 遠端（自動抓你的 GitHub 帳號名稱）
 git remote add origin https://github.com/$(gh api user --jq .login)/chat-booster.git
+
+# 7. 推到 GitHub
 git push -u origin main
 
-# 安裝套件（雲端環境會跑，不會用到你的 iPhone）
+# 8. 安裝所有依賴
 npm ci
 
-# 安裝 Playwright browser（雲端環境可跑）
+# 9. 安裝 Playwright（含 browser）
 npx playwright install --with-deps
 
-echo "--------------------------------------------"
-echo "🎉 完成！你的專案已推到 chat-booster GitHub。"
-echo "🟢 你現在只需：前往 Vercel → Import Project。"
-echo "📌 GitHub Actions 會自動：Lint → Test → Build → Deploy → 每30天分析。"
-echo "--------------------------------------------"
+echo "-------------------------------------------------------"
+echo "🎉 專案已完整匯入並推送到 GitHub: chat-booster"
+echo "🟢 下一步：到 Vercel → Import → Chat-Booster → Deploy"
+echo "📌 之後所有：commit / test / e2e / monthly AI 會全部自動化"
+echo "-------------------------------------------------------"
